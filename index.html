@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Convite para um desafio · Desafiaê</title>
+<style>
+  :root{--orange:#C94213;--purple:#6236D6;--ink:#2B2118;--muted:#6B6259;--bg:#FFF8F2}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;justify-content:center}
+  main{width:100%;max-width:440px;padding:28px 20px 40px}
+  .brand{font-weight:700;color:var(--orange);letter-spacing:.3px}
+  .card{background:#fff;border-radius:20px;padding:22px;margin-top:16px;box-shadow:0 2px 14px rgba(43,33,24,.08)}
+  h1{font-size:24px;margin:6px 0 6px}
+  .by{color:var(--muted);font-size:15px;margin:0 0 14px}
+  .pill{display:inline-block;background:#F1EDFC;color:var(--purple);border-radius:99px;padding:6px 12px;font-size:14px;margin:0 6px 6px 0}
+  ul{padding-left:20px;margin:8px 0}
+  .code{font-size:30px;letter-spacing:4px;font-weight:700;text-align:center;margin:10px 0 2px}
+  .btn{display:block;text-align:center;text-decoration:none;background:var(--orange);color:#fff;border-radius:14px;padding:15px;font-size:17px;font-weight:600;margin-top:14px}
+  .btn.sec{background:#fff;color:var(--orange);border:2px solid var(--orange)}
+  small{color:var(--muted);display:block;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">Desafiaê</div>
+  <div class="card" id="card"><p>Carregando convite…</p></div>
+</main>
+<script>
+// Preencha uma vez (os mesmos valores de app_config.gd). A chave "anon" é pública por natureza.
+const SUPABASE_URL = "https://fjqfeqdwbgetbhgppcxf.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqcWZlcWR3YmdldGJoZ3BwY3hmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MjM0NjcsImV4cCI6MjEwNjE5OTQ2N30.D2PuRhxaVWRFEy_QLhftjojx3mIF2lGF3NdSSuwJBx4";
+const APP_URL = "https://play.google.com/apps/testing/com.ildesenvolvimento.desafiae";
+
+const code = (new URLSearchParams(location.search).get("c") || "").trim();
+const card = document.getElementById("card");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function empty(){ card.innerHTML = '<h1>Convite não encontrado</h1><p class="by">Confira o link com quem convidou você.</p><a class="btn sec" href="'+APP_URL+'">Conhecer o Desafiaê</a>'; }
+
+if(!code){ empty(); } else {
+  fetch(SUPABASE_URL + "/rest/v1/rpc/challenge_preview", {
+    method: "POST",
+    headers: {"apikey": SUPABASE_ANON_KEY, "Authorization": "Bearer " + SUPABASE_ANON_KEY, "Content-Type": "application/json"},
+    body: JSON.stringify({p_code: code})
+  }).then(r => r.ok ? r.json() : null).then(d => {
+    if(!d){ empty(); return; }
+    const n = d.participants || 0;
+    const pr = (d.practices || []).map(p => "<li>"+esc(p)+"</li>").join("");
+    card.innerHTML =
+      '<p class="by">Você foi convidado(a) para um desafio</p>' +
+      '<h1>'+esc(d.title)+'</h1>' +
+      (d.description ? '<p class="by">'+esc(d.description)+'</p>' : '') +
+      '<span class="pill">'+d.duration_days+' dias</span><span class="pill">'+n+' participante'+(n===1?'':'s')+'</span>' +
+      (pr ? '<p style="margin:10px 0 0"><b>Práticas do desafio</b></p><ul>'+pr+'</ul>' : '') +
+      '<hr style="border:0;border-top:1px solid #eee;margin:16px 0">' +
+      '<p class="by" style="margin:0">Seu código de convite</p><div class="code">'+esc(code.toUpperCase())+'</div>' +
+      '<a class="btn" href="'+APP_URL+'">Baixar o Desafiaê</a>' +
+      '<small>Depois de criar sua conta, abra a aba Desafios e cole o código em “Recebeu um código de convite?”.</small>';
+  }).catch(empty);
+}
+</script>
+</body>
+</html>
